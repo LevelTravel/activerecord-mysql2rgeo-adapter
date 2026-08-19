@@ -34,7 +34,12 @@ spatial: nil, array: false, **)
             # @geometric_type = geo_type_from_sql_type(sql_type)
             build_from_sql_type(sql_type_metadata.sql_type)
           end
-          super(name, cast_type, default, sql_type_metadata, null, default_function, collation: collation, comment: comment)
+          column_parameters = ConnectionAdapters::Column.instance_method(:initialize).parameters
+          if column_parameters.any? { |_, parameter_name| parameter_name == :cast_type }
+            super(name, cast_type, default, sql_type_metadata, null, default_function, collation: collation, comment: comment)
+          else
+            super(name, default, sql_type_metadata, null, default_function, collation: collation, comment: comment)
+          end
           return unless spatial?
           return unless @srid
 
