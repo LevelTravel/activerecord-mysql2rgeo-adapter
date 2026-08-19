@@ -3,7 +3,7 @@
 require_relative "../test_helper"
 
 module Mysql2Rgeo
-  class SpatialColumnTest < ActiveSupport::TestCase
+  class SpatialColumnTest < ActiveSupport::TestCase # rubocop:disable Metrics/ClassLength
     # ------------------------------------------------------------------
     # encode_with / init_with  –  YAML round-trip
     # ------------------------------------------------------------------
@@ -274,7 +274,12 @@ module Mysql2Rgeo
       )
       mysql_metadata = ActiveRecord::ConnectionAdapters::MySQL::TypeMetadata.new(type_metadata)
       string_type = ActiveRecord::Type.lookup(:string, adapter: :mysql2)
-      string_col = ActiveRecord::ConnectionAdapters::MySQL::Column.new("name", string_type, nil, mysql_metadata, true)
+      column_class = ActiveRecord::ConnectionAdapters::MySQL::Column
+      string_col = if column_class.instance_method(:initialize).parameters.any? { |_, name| name == :cast_type }
+                     column_class.new("name", string_type, nil, mysql_metadata, true)
+                   else
+                     column_class.new("name", nil, mysql_metadata, true)
+                   end
 
       refute_equal spatial_col, string_col
     end

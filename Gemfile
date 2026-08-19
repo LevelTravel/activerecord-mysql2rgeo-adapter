@@ -27,7 +27,7 @@ def activerecord_version
   ver["number"]
 end
 # Need to install for tests
-gem "rails", github: "rails/rails", ref: ENV.fetch("AR_VERSION", "v#{activerecord_version}")
+gem "rails", github: "rails/rails", ref: ENV.fetch("AR_VERSION") { "v#{activerecord_version}" }
 
 group :development do
   # Gems used by the ActiveRecord test suite

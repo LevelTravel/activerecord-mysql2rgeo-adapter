@@ -78,6 +78,22 @@ module ActiveRecord
           st_polygon: { type: "polygon" }
         }.freeze
 
+      SPATIAL_NATIVE_DATABASE_TYPES = {
+        geography: { name: "geometry" },
+        geometry: { name: "geometry" },
+        geometrycollection: { name: "geometrycollection" },
+        line_string: { name: "linestring" },
+        linestring: { name: "linestring" },
+        st_point: { name: "point" },
+        st_polygon: { name: "polygon" },
+        multi_line_string: { name: "multilinestring" },
+        multi_point: { name: "multipoint" },
+        multi_polygon: { name: "multipolygon" },
+        spatial: { name: "geometry" },
+        point: { name: "point" },
+        polygon: { name: "polygon" }
+      }.freeze
+
       DEFAULT_SRID = 0
 
       def initialize(...)
@@ -97,26 +113,16 @@ module ActiveRecord
       def native_database_types
         # Add spatial types
         # Reference: https://dev.mysql.com/doc/refman/5.6/en/spatial-type-overview.html
-        self.class.native_database_types
+        if self.class.superclass.respond_to?(:native_database_types)
+          self.class.native_database_types
+        else
+          super.merge(SPATIAL_NATIVE_DATABASE_TYPES)
+        end
       end
 
       class << self
         def native_database_types
-          super.merge(
-            geography: { name: "geometry" },
-            geometry: { name: "geometry" },
-            geometrycollection: { name: "geometrycollection" },
-            line_string: { name: "linestring" },
-            linestring: { name: "linestring" },
-            st_point: { name: "point" },
-            st_polygon: { name: "polygon" },
-            multi_line_string: { name: "multilinestring" },
-            multi_point: { name: "multipoint" },
-            multi_polygon: { name: "multipolygon" },
-            spatial: { name: "geometry" },
-            point: { name: "point" },
-            polygon: { name: "polygon" }
-          )
+          super.merge(SPATIAL_NATIVE_DATABASE_TYPES)
         end
 
         def extended_type_map(emulate_booleans:, default_timezone: nil)
@@ -226,7 +232,7 @@ module ActiveRecord
       private
 
       def type_map
-        if (key = extended_type_map_key)
+        if respond_to?(:extended_type_map_key, true) && (key = extended_type_map_key)
           self.class::EXTENDED_TYPE_MAPS.compute_if_absent(key) do
             self.class.extended_type_map(**key)
           end
